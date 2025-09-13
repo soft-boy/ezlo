@@ -26,6 +26,45 @@ const MODEL = "claude-sonnet-4-20250514"; // same as your CLI
 const WORKSPACE = "./deckspeed-template"; // your workspace directory
 const ALLOWED_ORIGIN = Deno.env.get("ALLOWED_ORIGIN") ?? "http://localhost:3000";
 
+function serveFromWorkspace(urlPath: string, baseOrigin: string) {
+  // map / -> index.html, strip leading slash
+  const rel = urlPath.replace(/^\//, "");
+  const filePath = rel === "" ? "index.html" : rel;
+  const absPath = join(Deno.cwd(), filePath);
+
+  // Special case: inject <base href="/preview/"> into index.html if the iframe is using /preview
+  const shouldInjectBase = urlPath === "/preview" || urlPath === "/preview/";
+
+  try {
+    const data = Deno.readFileSync(absPath);
+    let body = data;
+    let ct = contentType(extname(filePath)) ?? "application/octet-stream";
+
+    if (filePath === "index.html") {
+      let html = new TextDecoder().decode(data);
+      if (shouldInjectBase && !html.includes("<base ")) {
+        // inject <base> so absolute asset paths resolve under /preview/
+        html = html.replace(
+          /<head([^>]*)>/i,
+          `<head$1><base href="/preview/">`
+        );
+      }
+      body = new TextEncoder().encode(html);
+      ct = "text/html; charset=utf-8";
+    }
+
+    return new Response(body, {
+      headers: {
+        "content-type": ct,
+        "cache-control": "no-store",
+        "access-control-allow-origin": baseOrigin,
+      },
+    });
+  } catch {
+    return new Response("Not found", { status: 404 });
+  }
+}
+
 // ---------- Zypher setup ----------
 function getRequiredEnv(name: string): string {
   const value = Deno.env.get(name);
@@ -177,29 +216,33 @@ Deno.serve({ port: PORT }, (req: Request) => {
       headers: {
         "access-control-allow-origin": ALLOWED_ORIGIN,
         "access-control-allow-headers": "content-type",
-        "access-control-allow-methods": "GET,POST,OPTIONS"
-      }
+        "access-control-allow-methods": "GET,POST,OPTIONS",
+      },
     });
   }
 
-  if (url.pathname === "/health") {
+  if (url.pathname === "/health")
     return new Response(JSON.stringify({ ok: true }), {
       headers: {
         "content-type": "application/json",
-        "access-control-allow-origin": ALLOWED_ORIGIN
-      }
+        "access-control-allow-origin": ALLOWED_ORIGIN,
+      },
     });
-  }
-
-  if (url.pathname.startsWith("/preview")) {
-    return servePreview(req, url); // your existing function (already uses Deno.cwd())
-  }
 
   if (url.pathname === "/ws" && req.headers.get("upgrade") === "websocket") {
-    return handleWS(req); // your existing function that calls Deno.upgradeWebSocket
+    return handleWS(req);
   }
 
-  return new Response("Not found", { status: 404 });
+  // Serve the workspace at BOTH /preview/* and /
+  if (url.pathname === "/preview" || url.pathname.startsWith("/preview/")) {
+    // strip /preview and serve from cwd (with <base> injection for index)
+    const stripped = url.pathname.replace(/^\/preview/, "") || "/";
+    return serveFromWorkspace(stripped, ALLOWED_ORIGIN);
+  }
+
+  // root fallback for absolute asset paths like /styles.css, /assets/...
+  // (but don’t shadow /ws and /health which we handled above)
+  return serveFromWorkspace(url.pathname, ALLOWED_ORIGIN);
 });
 
 console.log(`🧩 API on http://localhost:${PORT}`);
