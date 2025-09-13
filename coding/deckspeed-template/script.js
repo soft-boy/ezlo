@@ -1,74 +1,63 @@
-// DOM Content Loaded
+// Smooth scrolling for navigation links
 document.addEventListener('DOMContentLoaded', function() {
-    // Mobile Navigation
-    const navHamburger = document.getElementById('navHamburger');
-    const navMenu = document.getElementById('navMenu');
+    // Mobile menu toggle
+    const hamburger = document.getElementById('navHamburger');
+    const navMenu = document.querySelector('.nav-menu');
     
-    if (navHamburger && navMenu) {
-        navHamburger.addEventListener('click', function() {
-            navHamburger.classList.toggle('active');
+    if (hamburger && navMenu) {
+        hamburger.addEventListener('click', function() {
             navMenu.classList.toggle('active');
-        });
-
-        // Close mobile menu when clicking on links
-        const navLinks = document.querySelectorAll('.nav-link');
-        navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                navHamburger.classList.remove('active');
-                navMenu.classList.remove('active');
-            });
-        });
-
-        // Close mobile menu when clicking outside
-        document.addEventListener('click', function(event) {
-            const isClickInsideNav = navMenu.contains(event.target) || navHamburger.contains(event.target);
-            if (!isClickInsideNav && navMenu.classList.contains('active')) {
-                navHamburger.classList.remove('active');
-                navMenu.classList.remove('active');
-            }
+            hamburger.classList.toggle('active');
         });
     }
-
-    // Header Background on Scroll
-    const header = document.querySelector('.header');
-    if (header) {
-        window.addEventListener('scroll', function() {
-            if (window.scrollY > 100) {
-                header.style.background = 'rgba(255, 255, 255, 0.98)';
-                header.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.15)';
-            } else {
-                header.style.background = 'rgba(255, 255, 255, 0.95)';
-                header.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.1)';
-            }
-        });
-    }
-
-    // Smooth Scrolling for Anchor Links
-    const anchorLinks = document.querySelectorAll('a[href^="#"]');
-    anchorLinks.forEach(link => {
+    
+    // Smooth scrolling for anchor links
+    const links = document.querySelectorAll('a[href^="#"]');
+    links.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
-            const targetId = this.getAttribute('href').substring(1);
-            const targetElement = document.getElementById(targetId);
+            const targetId = this.getAttribute('href');
+            const targetSection = document.querySelector(targetId);
             
-            if (targetElement) {
-                const headerHeight = document.querySelector('.header').offsetHeight;
-                const targetPosition = targetElement.offsetTop - headerHeight;
-                
-                window.scrollTo({
-                    top: targetPosition,
-                    behavior: 'smooth'
+            if (targetSection) {
+                targetSection.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
                 });
+                
+                // Close mobile menu if open
+                if (navMenu.classList.contains('active')) {
+                    navMenu.classList.remove('active');
+                    hamburger.classList.remove('active');
+                }
             }
         });
     });
-
-    // Intersection Observer for Animations
+    
+    // Header background on scroll
+    const header = document.querySelector('.header');
+    let lastScrollTop = 0;
+    
+    window.addEventListener('scroll', function() {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        
+        if (scrollTop > 100) {
+            header.style.background = 'rgba(255, 255, 255, 0.98)';
+            header.style.boxShadow = '0 4px 30px rgba(0, 0, 0, 0.12)';
+        } else {
+            header.style.background = 'rgba(255, 255, 255, 0.95)';
+            header.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.08)';
+        }
+        
+        lastScrollTop = scrollTop;
+    });
+    
+    // Animate elements on scroll
     const observerOptions = {
         threshold: 0.1,
         rootMargin: '0px 0px -50px 0px'
     };
-
+    
     const observer = new IntersectionObserver(function(entries) {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -77,333 +66,410 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }, observerOptions);
-
+    
     // Observe elements for animation
-    const animatedElements = document.querySelectorAll(
-        '.feature-card, .breed-card, .care-item, .fact-card, .gallery-item'
-    );
+    const animateElements = document.querySelectorAll('.feature-card, .review-card, .pricing-card, .faq-item');
+    animateElements.forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(30px)';
+        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(el);
+    });
     
-    animatedElements.forEach((element, index) => {
-        // Initial state
-        element.style.opacity = '0';
-        element.style.transform = 'translateY(30px)';
-        element.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
+    // FAQ Toggle functionality
+    const faqItems = document.querySelectorAll('.faq-item');
+    faqItems.forEach(item => {
+        const question = item.querySelector('.faq-question');
+        const answer = item.querySelector('.faq-answer');
         
-        observer.observe(element);
-    });
-
-    // Gallery Image Click Handler
-    const galleryItems = document.querySelectorAll('.gallery-item img');
-    galleryItems.forEach(img => {
-        img.addEventListener('click', function() {
-            createLightbox(this.src, this.alt);
-        });
-    });
-
-    // Lightbox functionality
-    function createLightbox(src, alt) {
-        // Remove existing lightbox if any
-        const existingLightbox = document.querySelector('.lightbox');
-        if (existingLightbox) {
-            existingLightbox.remove();
-        }
-
-        // Create lightbox
-        const lightbox = document.createElement('div');
-        lightbox.className = 'lightbox';
-        lightbox.innerHTML = `
-            <div class="lightbox-overlay">
-                <div class="lightbox-content">
-                    <img src="${src}" alt="${alt}">
-                    <button class="lightbox-close">&times;</button>
-                </div>
-            </div>
-        `;
-
-        // Add lightbox styles
-        lightbox.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0, 0, 0, 0.9);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        `;
-
-        const overlay = lightbox.querySelector('.lightbox-overlay');
-        overlay.style.cssText = `
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        `;
-
-        const content = lightbox.querySelector('.lightbox-content');
-        content.style.cssText = `
-            position: relative;
-            max-width: 90%;
-            max-height: 90%;
-        `;
-
-        const image = lightbox.querySelector('img');
-        image.style.cssText = `
-            max-width: 100%;
-            max-height: 100%;
-            border-radius: 10px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        `;
-
-        const closeBtn = lightbox.querySelector('.lightbox-close');
-        closeBtn.style.cssText = `
-            position: absolute;
-            top: -15px;
-            right: -15px;
-            background: white;
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            font-size: 24px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            transition: transform 0.2s ease;
-        `;
-
-        document.body.appendChild(lightbox);
-
-        // Animate in
-        requestAnimationFrame(() => {
-            lightbox.style.opacity = '1';
-        });
-
-        // Close handlers
-        closeBtn.addEventListener('click', closeLightbox);
-        overlay.addEventListener('click', function(e) {
-            if (e.target === overlay) {
-                closeLightbox();
+        if (question && answer) {
+            // Initially hide answers except first one
+            if (item !== faqItems[0]) {
+                answer.style.display = 'none';
+                item.style.cursor = 'pointer';
             }
-        });
-
-        closeBtn.addEventListener('mouseenter', () => {
-            closeBtn.style.transform = 'scale(1.1)';
-        });
-
-        closeBtn.addEventListener('mouseleave', () => {
-            closeBtn.style.transform = 'scale(1)';
-        });
-
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeLightbox();
-            }
-        });
-
-        function closeLightbox() {
-            lightbox.style.opacity = '0';
-            setTimeout(() => {
-                lightbox.remove();
-            }, 300);
-        }
-    }
-
-    // Random Cat Facts (for fun)
-    const catFacts = [
-        "Cats have a third eyelid called a nictitating membrane.",
-        "A group of cats is called a 'clowder'.",
-        "Cats can't taste sweetness.",
-        "A cat's nose print is unique, just like a human's fingerprint.",
-        "Cats spend 70% of their lives sleeping.",
-        "A cat can jump up to six times its length.",
-        "Cats have over 20 muscles that control their ears.",
-        "The first cat in space was a French cat named Felicette in 1963.",
-        "Cats can run up to 30 mph.",
-        "A cat's purr vibrates between 20-50 Hz, which can help heal bones."
-    ];
-
-    // Add random fact functionality
-    function showRandomFact() {
-        const randomFact = catFacts[Math.floor(Math.random() * catFacts.length)];
-        
-        // Create notification
-        const notification = document.createElement('div');
-        notification.style.cssText = `
-            position: fixed;
-            top: 100px;
-            right: 20px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            z-index: 10000;
-            max-width: 300px;
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-        `;
-        
-        notification.innerHTML = `
-            <div style="font-weight: 600; margin-bottom: 0.5rem;">🐱 Cat Fact!</div>
-            <div>${randomFact}</div>
-        `;
-
-        document.body.appendChild(notification);
-
-        // Animate in
-        requestAnimationFrame(() => {
-            notification.style.transform = 'translateX(0)';
-        });
-
-        // Remove after 5 seconds
-        setTimeout(() => {
-            notification.style.transform = 'translateX(100%)';
-            setTimeout(() => {
-                notification.remove();
-            }, 300);
-        }, 5000);
-    }
-
-    // Show random fact every 30 seconds
-    setInterval(showRandomFact, 30000);
-    
-    // Show first fact after 10 seconds
-    setTimeout(showRandomFact, 10000);
-
-    // Parallax effect for hero section
-    window.addEventListener('scroll', function() {
-        const scrolled = window.pageYOffset;
-        const hero = document.querySelector('.hero');
-        const heroBackground = document.querySelector('.hero-background');
-        
-        if (hero && heroBackground) {
-            const rate = scrolled * -0.5;
-            heroBackground.style.transform = `translateY(${rate}px)`;
-        }
-    });
-
-    // Add hover effects to breed cards
-    const breedCards = document.querySelectorAll('.breed-card');
-    breedCards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-10px) scale(1.02)';
-        });
-
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0) scale(1)';
-        });
-    });
-
-    // Add click effects to buttons
-    const buttons = document.querySelectorAll('.btn');
-    buttons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            // Create ripple effect
-            const rect = this.getBoundingClientRect();
-            const ripple = document.createElement('span');
-            const size = Math.max(rect.width, rect.height);
-            const x = e.clientX - rect.left - size / 2;
-            const y = e.clientY - rect.top - size / 2;
             
-            ripple.style.cssText = `
-                position: absolute;
-                border-radius: 50%;
-                background: rgba(255, 255, 255, 0.6);
-                transform: scale(0);
-                animation: ripple 0.6s linear;
-                left: ${x}px;
-                top: ${y}px;
-                width: ${size}px;
-                height: ${size}px;
-                pointer-events: none;
-            `;
-
-            this.style.position = 'relative';
-            this.style.overflow = 'hidden';
-            this.appendChild(ripple);
-
-            setTimeout(() => {
-                ripple.remove();
-            }, 600);
+            question.addEventListener('click', function() {
+                const isVisible = answer.style.display !== 'none';
+                
+                // Close all other FAQs
+                faqItems.forEach(otherItem => {
+                    if (otherItem !== item) {
+                        const otherAnswer = otherItem.querySelector('.faq-answer');
+                        if (otherAnswer) {
+                            otherAnswer.style.display = 'none';
+                        }
+                    }
+                });
+                
+                // Toggle current FAQ
+                answer.style.display = isVisible ? 'none' : 'block';
+            });
+        }
+    });
+    
+    // Add to cart functionality
+    const addToCartButtons = document.querySelectorAll('.btn-primary, .btn-cta');
+    addToCartButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            // Prevent default if it's a button
+            if (this.tagName === 'BUTTON') {
+                e.preventDefault();
+                
+                // Add visual feedback
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-check"></i> Added to Cart!';
+                this.style.background = 'linear-gradient(135deg, #059669 0%, #047857 100%)';
+                
+                // Show success message
+                showNotification('Added to cart successfully!', 'success');
+                
+                // Reset after 2 seconds
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                    this.style.background = '';
+                }, 2000);
+            }
         });
     });
-
-    // Add CSS for ripple animation
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes ripple {
-            to {
-                transform: scale(2);
-                opacity: 0;
-            }
-        }
-    `;
-    document.head.appendChild(style);
-
-    // Lazy loading for images
-    const images = document.querySelectorAll('img');
-    const imageObserver = new IntersectionObserver((entries, observer) => {
+    
+    // Newsletter subscription
+    const subscribeButton = document.querySelector('button:contains("Join Loyalty Club")');
+    if (subscribeButton) {
+        subscribeButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Show subscription modal or form
+            showNotification('Subscription feature coming soon! 🚀', 'info');
+        });
+    }
+    
+    // Pricing calculator
+    const pricingCards = document.querySelectorAll('.pricing-card');
+    pricingCards.forEach(card => {
+        card.addEventListener('click', function() {
+            // Remove active class from all cards
+            pricingCards.forEach(c => c.classList.remove('selected'));
+            
+            // Add active class to clicked card
+            this.classList.add('selected');
+            
+            // Update visual feedback
+            this.style.transform = 'scale(1.02)';
+            this.style.boxShadow = '0 12px 40px rgba(16, 185, 129, 0.2)';
+            
+            setTimeout(() => {
+                this.style.transform = '';
+                this.style.boxShadow = '';
+            }, 300);
+        });
+    });
+    
+    // Counter animation for stats
+    const statNumbers = document.querySelectorAll('.stat-number');
+    const statsObserver = new IntersectionObserver(function(entries) {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                const img = entry.target;
-                img.style.opacity = '0';
-                img.style.transition = 'opacity 0.3s ease';
+                const target = entry.target;
+                const finalValue = target.textContent;
                 
-                img.onload = function() {
-                    this.style.opacity = '1';
-                };
+                if (finalValue.includes('%')) {
+                    animateCounter(target, 0, parseInt(finalValue), '%');
+                } else if (finalValue === '0') {
+                    // For zero values, just show them
+                    target.textContent = '0';
+                } else {
+                    animateCounter(target, 0, parseInt(finalValue) || 100);
+                }
                 
-                observer.unobserve(img);
+                statsObserver.unobserve(target);
             }
         });
+    }, { threshold: 0.5 });
+    
+    statNumbers.forEach(stat => {
+        statsObserver.observe(stat);
     });
-
-    images.forEach(img => {
-        imageObserver.observe(img);
+    
+    // Loading screen
+    window.addEventListener('load', function() {
+        document.body.classList.add('loaded');
+        
+        // Add subtle entrance animation to hero
+        const heroContent = document.querySelector('.hero-content');
+        if (heroContent) {
+            heroContent.style.animation = 'fadeInUp 1s ease-out';
+        }
     });
-
-    console.log('🐱 Welcome to Purrfect Cats! Enjoy exploring our feline world!');
+    
+    // Product image gallery (if images are added later)
+    const productImages = document.querySelectorAll('.product-image');
+    productImages.forEach(img => {
+        img.addEventListener('click', function() {
+            // Create modal for image viewing
+            showImageModal(this.src, this.alt);
+        });
+    });
+    
+    // Social sharing (placeholder)
+    const shareButtons = document.querySelectorAll('.share-button');
+    shareButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const platform = this.dataset.platform;
+            shareOnSocial(platform);
+        });
+    });
 });
 
-// Preloader (optional)
-window.addEventListener('load', function() {
-    const preloader = document.createElement('div');
-    preloader.style.cssText = `
+// Utility Functions
+function animateCounter(element, start, end, suffix = '') {
+    const duration = 2000;
+    const range = end - start;
+    const startTime = Date.now();
+    
+    function updateCounter() {
+        const elapsedTime = Date.now() - startTime;
+        const progress = Math.min(elapsedTime / duration, 1);
+        
+        // Easing function
+        const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+        const current = Math.round(start + (range * easeOutQuart));
+        
+        element.textContent = current + suffix;
+        
+        if (progress < 1) {
+            requestAnimationFrame(updateCounter);
+        }
+    }
+    
+    updateCounter();
+}
+
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    // Style the notification
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#10b981' : '#3b82f6'};
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        z-index: 10000;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+        max-width: 300px;
+        word-wrap: break-word;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Animate in
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
+function showImageModal(src, alt) {
+    const modal = document.createElement('div');
+    modal.className = 'image-modal';
+    modal.innerHTML = `
+        <div class="modal-backdrop">
+            <div class="modal-content">
+                <img src="${src}" alt="${alt}">
+                <button class="modal-close">&times;</button>
+            </div>
+        </div>
+    `;
+    
+    modal.style.cssText = `
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: rgba(0, 0, 0, 0.8);
         display: flex;
         align-items: center;
         justify-content: center;
         z-index: 10000;
-        transition: opacity 0.5s ease;
+        opacity: 0;
+        transition: opacity 0.3s ease;
     `;
     
-    preloader.innerHTML = `
-        <div style="text-align: center; color: white;">
-            <div style="font-size: 4rem; margin-bottom: 1rem;">🐱</div>
-            <div style="font-size: 1.5rem; font-weight: 600;">Loading Purrfect Cats...</div>
-        </div>
+    const modalContent = modal.querySelector('.modal-content');
+    modalContent.style.cssText = `
+        position: relative;
+        max-width: 90vw;
+        max-height: 90vh;
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
     `;
-
-    document.body.appendChild(preloader);
-
+    
+    const img = modal.querySelector('img');
+    img.style.cssText = `
+        width: 100%;
+        height: auto;
+        max-height: 70vh;
+        object-fit: contain;
+    `;
+    
+    const closeBtn = modal.querySelector('.modal-close');
+    closeBtn.style.cssText = `
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        background: none;
+        border: none;
+        font-size: 2rem;
+        cursor: pointer;
+        color: #666;
+    `;
+    
+    document.body.appendChild(modal);
+    
     setTimeout(() => {
-        preloader.style.opacity = '0';
+        modal.style.opacity = '1';
+    }, 10);
+    
+    // Close modal functionality
+    function closeModal() {
+        modal.style.opacity = '0';
         setTimeout(() => {
-            preloader.remove();
-        }, 500);
-    }, 1000);
-});
+            if (modal.parentNode) {
+                modal.parentNode.removeChild(modal);
+            }
+        }, 300);
+    }
+    
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+}
+
+function shareOnSocial(platform) {
+    const url = window.location.href;
+    const title = 'Kirkland Signature Lime Sparkling Energy Water - Clean Energy, Zero Sugar';
+    const text = 'Check out this amazing energy water! Zero calories, zero sugar, all natural!';
+    
+    let shareUrl;
+    
+    switch (platform) {
+        case 'facebook':
+            shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+            break;
+        case 'twitter':
+            shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+            break;
+        case 'linkedin':
+            shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+            break;
+        default:
+            showNotification('Sharing feature coming soon!', 'info');
+            return;
+    }
+    
+    window.open(shareUrl, '_blank', 'width=600,height=400');
+}
+
+// Performance optimization - Lazy load images when they come into view
+function initLazyLoading() {
+    const images = document.querySelectorAll('img[data-src]');
+    
+    const imageObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.src = img.dataset.src;
+                img.removeAttribute('data-src');
+                imageObserver.unobserve(img);
+            }
+        });
+    });
+    
+    images.forEach(img => imageObserver.observe(img));
+}
+
+// Initialize lazy loading when DOM is ready
+document.addEventListener('DOMContentLoaded', initLazyLoading);
+
+// Add CSS for mobile menu toggle
+const style = document.createElement('style');
+style.textContent = `
+    @media (max-width: 768px) {
+        .nav-menu {
+            position: fixed;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            flex-direction: column;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(-100%);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-menu.active {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .nav-hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+        
+        .nav-hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+        
+        .nav-hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -6px);
+        }
+        
+        .notification {
+            right: 10px;
+            left: 10px;
+            max-width: none;
+        }
+    }
+    
+    .loaded {
+        opacity: 1;
+    }
+    
+    .pricing-card.selected {
+        border-color: #10b981 !important;
+    }
+`;
+
+document.head.appendChild(style);
