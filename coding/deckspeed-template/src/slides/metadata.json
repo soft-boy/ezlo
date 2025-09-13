@@ -1,0 +1,18 @@
+{
+  "title": "Kirkland Signature Lime Sparkling Energy Water",
+  "description": "Spark your day. Brighten your night.",
+  "author": "Kirkland Signature",
+  "paperSize": "WIDE",
+  "orientation": "landscape",
+  "order": {
+    "hero-title-slide-8421": 1,
+    "why-youll-love-it-3672": 2,
+    "our-story-innovation-9145": 3,
+    "customer-testimonials-2847": 4,
+    "product-details-specs-5683": 5,
+    "pricing-deals-7291": 6,
+    "faq-section-4856": 7,
+    "loyalty-subscription-3194": 8,
+    "call-to-action-9573": 9
+  }
+}
