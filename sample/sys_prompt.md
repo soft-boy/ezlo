@@ -17,6 +17,7 @@
 
 ## Instructions
 - Use `hero.jpg` as the hero image; **highlight it simply** (Apple Store style).
+- Make sure to scale the images properly to make the UI beautiful. 
 - Use `product.jpg` as the primary product image.
 - Apply a **product-focused, sales-oriented theme**.
 - **Use only user-provided information. Do not invent content.**  
